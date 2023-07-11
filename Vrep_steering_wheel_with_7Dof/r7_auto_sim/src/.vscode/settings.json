@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "ostream": "cpp",
+        "complex": "cpp",
+        "*.tcc": "cpp",
+        "iostream": "cpp",
+        "iomanip": "cpp",
+        "thread": "cpp"
+    },
+    "python.autoComplete.extraPaths": [
+        "/home/tc/Robcup_2022/ROS_Code/devel/lib/python2.7/dist-packages",
+        "/opt/ros/melodic/lib/python2.7/dist-packages",
+        "/opt/ros/dashing/lib/python3.6/site-packages"
+    ]
+}

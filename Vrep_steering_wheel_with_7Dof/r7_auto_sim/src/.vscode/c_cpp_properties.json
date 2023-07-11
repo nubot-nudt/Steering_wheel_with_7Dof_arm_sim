@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/tc/Robcup_2022/ROS_Code/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/cc_3r_sim/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/cc_7rl3_joy/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/cc_7rl3_joy_ver2/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/cc_7rl3_sim/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/cc_7rl3_sim_ver2/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/cobra_sim/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/control_ps/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/ibr2600_joy_6r/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/innfos_control/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/r7_jacob_sim/include/**",
+        "/home/tc/Robcup_2022/ROS_Code/src/test_control/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
