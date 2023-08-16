@@ -7,7 +7,7 @@ Project of Steering wheel in coppeliasim.
 
 运行例程前，请确保coppeliasim为4.1版本，并安装与ROS通信插件。
 
-### 载入仿真环境
+###About Simulation Environment
 
 运行coppeliasim仿真环境，通过file-open sense选项打开给定的.ttt场景文件，点击run按钮开始仿真
 
@@ -21,7 +21,7 @@ Project of Steering wheel in coppeliasim.
 
 
 
-### 启动控制节点
+### Run control node
 
 1.新建工作空间，使用catkin_make命令编译给定的nubot_msgs、r7_auto_sim这两个功能包
 
@@ -37,12 +37,16 @@ source  \devel\setup.bash
 rosrun r7_auto_sim r7_auto_sim
 ```
 
-### 结果
+### result
 仅位置跟踪仿真结果：
+
+
 
 <img src="README.assets/90%C2%B0%20only%20pos_tracking.gif" style="zoom:50%;" />
 
 90°与130°初始条件下仿真结果：
+
+
 
 <center class="half">
 <img ![1] src="README.assets/90°result.gif" width = "48%" alt="***" align=left />
@@ -67,6 +71,9 @@ rosrun r7_auto_sim r7_auto_sim
 
 
 
+
 155°初始条件下仿真结果：
+
+
 
 <img src="README.assets/155%C2%B0result.gif" style="zoom: 80%;" />
