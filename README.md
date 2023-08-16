@@ -52,4 +52,5 @@ rosrun r7_auto_sim r7_auto_sim
 
 
 155°初始条件下仿真结果：
+
 <img src="README.assets/155%C2%B0result.gif" style="zoom: 80%;" />
