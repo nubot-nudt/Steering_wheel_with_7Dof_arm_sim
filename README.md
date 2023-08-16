@@ -37,3 +37,36 @@ source  \devel\setup.bash
 rosrun r7_auto_sim r7_auto_sim
 ```
 
+### 结果
+仅位置跟踪仿真结果：
+
+<img src="README.assets/90%C2%B0%20only%20pos_tracking.gif" style="zoom:50%;" />
+
+90°与130°初始条件下仿真结果：
+
+<center class="half">
+<img ![1] src="README.assets/90°result.gif" width = "48%" alt="***" align=left />
+<img ![2] src="README.assets/130°result.gif" width = "52%"  alt="***" align=right />
+<center>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+155°初始条件下仿真结果：
+
+<img src="README.assets/155%C2%B0result.gif" style="zoom: 80%;" />

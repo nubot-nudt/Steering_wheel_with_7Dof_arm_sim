@@ -297,23 +297,6 @@ public:
 
         std::cout << "相对于身体前方基坐标系坐标X:" << local_position(0) << ";Y:" << local_position(1) << ";Z:" << local_position(2) << ";" << std::endl;
 
-        // if (abs(Waitcount) > 360)
-        // {
-        //     flag_end_move = !flag_end_move;
-        //     Waitcount = 0;
-        // }
-        // if (flag_end_move)
-        // {
-        //     rx_goal = rotate_resolution * end_mode_speed_level * Rota_speed;
-        // }
-        // else
-        // {
-        //     rx_goal = rotate_resolution * end_mode_speed_level * -Rota_speed;
-        // }
-        // Waitcount++;
-        // dy = speed_resolution * end_mode_speed_level * (Rota_speed * R_ * 5);
-        // dz_goal = speed_resolution * 3 * end_mode_speed_level * (Rota_speed * R_) * sin(M_PI / 360 * Waitcount);
-
         if (start_x < 1.9)
         // 圆周运动拧阀门
         {
@@ -365,29 +348,32 @@ public:
         // rz = rz_goal;
     }
 
-    void joint_force_control() // 关节阻抗控制
-    {
-        double delta_vel[N] = {0};
-        float dt = 0.01;
-        double limited_ = 1.2;
-        for (int i = 0; i < N; i++)
-        {
-            delta_vel[i] = (joint_force_desire[i] - joint_force[i]) * 0.05;
-            dtheta[i] = dtheta[i] - delta_vel[i] + (joint_pos_desire[i] - pos[i]) * 0.03;
-            if (abs(dtheta(i)) > limited_)
-            {
-                std::cout << "dtheta[" << i << "]:" << dtheta(i) << "!!!!!!!!!" << std::endl;
-                dtheta[i] = limited_ * sgn(dtheta[i]);
-            }
-        }
-    }
     void end_force_control() // 末端阻抗控制+姿态闭环
     {
         // 导纳控制参数
         double M_f[6] = {1, 1, 1, 1, 1, 1};             // 惯性参数
         double B_f[6] = {0.1, 0.1, 0.1, 0.5, 0.5, 0.5}; // 阻尼参数
         double K_f[6] = {100, 100, 100, 200, 200, 200}; // 刚度参数
-
+        if(joint_4>145)
+        {
+            M_f[2]=M_f[2]+0.1*(pos[3]-joint_4);
+        }
+        if(joint_4>115)
+        {
+            B_f[2]=B_f[2]+0.1*(pos[3]-joint_4);
+        }
+        if(joint_4>80 && joint_4<=115)
+        {
+                K_f[2]=K_f[2]+10*(pos[3]-joint_4);
+        }
+        if(joint_4>115 && joint_4<=145)
+        {
+                K_f[2]=K_f[2]+50*(pos[3]-joint_4);
+        }
+        if(joint_4>145)
+        {
+                K_f[2]=K_f[2]+(pos[3]-joint_4)^3;
+        }
         // 误差参数
         VectorXd perror = VectorXd::Zero(6);
         double ferror[6] = {0};
@@ -406,10 +392,7 @@ public:
             if (abs(end_force[i]) < er)
                 end_force[i] = 0;
 
-        // Matrix3d Rx_, Ry_, Rz_;
-        // Rx_ << 1, 0, 0, 0, round(cos(rx_goal * control_time) / er) * er, -round(sin(rx_goal * control_time) / er) * er, 0, round(sin(rx_goal * control_time) / er) * er, round(cos(rx_goal * control_time) / er) * er;
-        // Ry_ << round(cos(ry_goal * control_time) / er) * er, 0, round(sin(ry_goal * control_time) / er) * er, 0, 1, 0, -round(sin(ry_goal * control_time) / er) * er, 0, round(cos(ry_goal * control_time) / er) * er;
-        // Rz_ << round(cos(rz_goal * control_time) / er) * er, -round(sin(rz_goal * control_time) / er) * er, 0, round(sin(rz_goal * control_time) / er) / er, round(cos(rz_goal * control_time) / er) * er, 0, 0, 0, 1;
+
         cacul_RHS(); // 首次进入循环时需要计算一次当前位置local_position
 
         if (pos_desire_save)
@@ -467,47 +450,6 @@ public:
         std::cout << "attitude_desire-attitude_err:\n"
                   << attitude_desire - attitude_err << ";   " << std::endl;
 
-        // attitude_err = attitude_err.transpose() * attitude_desire;       // 计算当前姿态到期望姿态的旋转偏差矩阵
-        // for (int i = 0; i < attitude_err.rows(); i++)                    // 处理旋转偏差矩阵的数据，接近0的要置零
-        // {
-        //     for (int j = 0; j < attitude_err.cols(); j++)
-        //     {
-        //         if (abs(attitude_err(i, j)) < 1e-5)
-        //         {                             // 判断阈值条件
-        //             attitude_err(i, j) = 0.0; // 将该元素置零
-        //         }
-        //     }
-        // }
-        // Vector3d eigenvector = Vector3d::Zero();
-        // 求取特征值特征向量的方法1
-        // JacobiSVD<Matrix3d> svd(attitude_err, ComputeFullU | ComputeFullV); // 旋转偏差矩阵的特征值特征向量
-        // for (int i = 0; i < 3; ++i)
-        // {
-        //     eigenvalue = svd.singularValues()[i];
-        //     // 判断特征值是否为1
-        //     if (abs(eigenvalue - 1.0) < 1e-3)
-        //     {
-        //         eigenvector = svd.matrixV().col(i);
-        //         break;
-        //     }
-        // }
-        // 求取特征值特征向量的方法2
-        // EigenSolver<Eigen::Matrix3d> es(attitude_err); //创建 EigenSolver 对象并传入旋转矩阵
-        // VectorXcd evs = es.eigenvalues();              // 获取所有复数形式的特征值
-        // MatrixXcd evc = es.eigenvectors();             // 获取对应的特征向量
-        // VectorXcd eigenvector_;
-        // for (int i = 0; i < evs.size(); i++)
-        // {
-        //     if (abs(evs(i).real() - 1.0) < 1e-6 && abs(evs(i).imag()) < 1e-6) // 判断特征值是否为实数的 1
-        //     {
-        //         eigenvector_ = evc.col(i);                        // 获取相应的特征向量
-        //         eigenvector = eigenvector_.real().cast<double>(); // 转换为实数类型的列向量
-        //     }
-        // }
-        // eigenvector = attitude_err.eulerAngles(1, 0, 2);
-        // rx = rx_goal - eigenvector[0] * theta_er;
-        // ry = ry_goal - eigenvector[1] * theta_er;
-        // rz = rz_goal - eigenvector[2] * theta_er;
 
         std::cout << setw(4) << "dx:" << dx << ";dy:" << dy << ";dz:" << dz << ";rx:" << rx << ";ry:" << ry << ";rz:" << rz << ";" << std::endl;
 
@@ -546,15 +488,6 @@ public:
             }
         }
 
-        // for (int i = 0; i < N; i++) // 关节角度闭环
-        // {
-        //     dtheta[i] = dtheta[i] + (joint_pos_desire[i] - pos[i]) * 0.05;
-        //     if (abs(dtheta(i)) > limited_joint)
-        //     {
-        //         std::cout << "dtheta[" << i << "]:" << dtheta(i) << "!!!!!!!!!" << std::endl;
-        //         dtheta[i] = limited_joint * sgn(dtheta[i]);
-        //     }
-        // }
     }
     /***************时间中断，控制部分***************/
     void timeController(const ros::TimerEvent &e)
@@ -592,151 +525,7 @@ public:
             cout << endl;
             if (left_or_right == 2 || left_or_right == 1)
             {
-                if (endOrJointMode == JOINT_MODE) // 一般控制
-                {
-                    // /*一键展开*/
-                    // if (flag_extend) // 一键展开  展开过程中不能松开按键 否则将停止展开   展开完毕需要松开“↓”和→
-                    // {
-                    //     flag_need_set_ModeV = 1; // 待会需要设置速度模式
-                    //     if (flag_need_set_ModeP) // 在展开循环中，只执行一次该循环，即只设置一次位置模式，否则会出现：设置位置模式→控制电机位置→设置位置模式→控制电机位置→...一直循环这样会使电机不动。
-                    //     {
-                    //         // firstCobraPubTosimMsg.firstPos[5] = POS1[5]/ (360.0 / Motor_Reduction_Ratio[5]);
-                    //         for (int i = 0; i < N; i++) // 将各个电机设置成位置模式
-                    //         {
-                    //             firstCobraPubTosimMsg.firstNeedMode = need_p;
-                    //             firstCobraPubTosimMsg.firstPos[i] = pos_extend[i] / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             firstCobraPubTosimMsg.firstPosMode = 1;
-                    //         }
-                    //         flag_need_set_ModeP = 0;
-                    //     }
-                    //     firstCobraPubTosim_.publish(firstCobraPubTosimMsg);
-                    //     cout << "\33[32m一键展开中！！！\033[0m" << endl;
-                    // }
-
-                    // /*一键还原*/
-                    // else if (flag_back) // 一键还原  还原过程中不能松开按键 否则将停止还原   还原完毕需要松开“↓”和→
-                    // {
-                    //     for (int i = 0; i < N; i++)
-                    //         cout << "pos_int[" << i << "]:" << pos_init[i] << endl;
-                    //     flag_need_set_ModeV = 1; // 待会需要设置速度模式
-                    //     if (flag_need_set_ModeP) // 在if(flag_back)循环中，只执行一次这个子循环，即只设置一次位置模式，否则会出现：设置位置模式→控制电机位置→设置位置模式→控制电机位置→...一直循环这样会使电机不动。
-                    //     {
-                    //         for (int i = 0; i < N; i++) // 将各个电机设置成位置模式
-                    //         {
-                    //             firstCobraPubTosimMsg.firstNeedMode = need_p;
-                    //             firstCobraPubTosimMsg.firstPos[i] = pos_init[i] / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             firstCobraPubTosimMsg.firstPosMode = 1;
-                    //         }
-                    //         flag_need_set_ModeP = 0;
-                    //     }
-                    //     firstCobraPubTosim_.publish(firstCobraPubTosimMsg);
-                    //     cout << "\33[32m一键归位中！！！\033[0m" << endl;
-                    // }
-
-                    // else if (flagA) //  ps手柄的R2
-                    // {
-                    //     flag_need_set_ModeV = 1; // 待会需要设置速度模式
-                    //     if (flag_need_set_ModeP) // 在if(flag_back)循环中，只执行一次这个子循环，即只设置一次位置模式，否则会出现：设置位置模式→控制电机位置→设置位置模式→控制电机位置→...一直循环这样会使电机不动。
-                    //     {
-                    //         for (int i = 0; i < N; i++) // 将各个电机设置成位置模式
-                    //         {
-                    //             firstCobraPubTosimMsg.firstNeedMode = need_p;
-                    //             firstCobraPubTosimMsg.firstPos[i] = pos[i] / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             firstCobraPubTosimMsg.firstPosMode = 1;
-                    //             if (i == 3)
-                    //                 firstCobraPubTosimMsg.firstPos[i] = -82 / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             if (i == 4)
-                    //                 firstCobraPubTosimMsg.firstPos[i] = 0 / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             if (i == 5)
-                    //                 firstCobraPubTosimMsg.firstPos[i] = 0 / (360.0 / Motor_Reduction_Ratio[i]);
-                    //         }
-                    //         flag_need_set_ModeP = 0;
-                    //     }
-                    //     firstCobraPubTosim_.publish(firstCobraPubTosimMsg);
-                    //     // cout <<"\33[32m一键归位中！！！\033[0m"<< endl;
-                    // }
-
-                    // else if (flagY) // PS手柄的R1
-                    // {
-                    //     flag_need_set_ModeV = 1; // 待会需要设置速度模式
-                    //     if (flag_need_set_ModeP) // 在if(flag_back)循环中，只执行一次这个子循环，即只设置一次位置模式，否则会出现：设置位置模式→控制电机位置→设置位置模式→控制电机位置→...一直循环这样会使电机不动。
-                    //     {
-                    //         for (int i = 0; i < N; i++) // 将各个电机设置成位置模式
-                    //         {
-                    //             firstCobraPubTosimMsg.firstNeedMode = need_p;
-                    //             firstCobraPubTosimMsg.firstPos[i] = pos[i] / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             firstCobraPubTosimMsg.firstPosMode = 1;
-                    //             if (i == 3)
-                    //                 firstCobraPubTosimMsg.firstPos[i] = 87 / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             if (i == 4)
-                    //                 firstCobraPubTosimMsg.firstPos[i] = 0 / (360.0 / Motor_Reduction_Ratio[i]);
-                    //             if (i == 5)
-                    //                 firstCobraPubTosimMsg.firstPos[i] = 0 / (360.0 / Motor_Reduction_Ratio[i]);
-                    //         }
-                    //         flag_need_set_ModeP = 0;
-                    //     }
-                    //     firstCobraPubTosim_.publish(firstCobraPubTosimMsg);
-                    //     // cout <<"\33[32m一键归位中！！！\033[0m"<< endl;
-                    // }
-
-                    // //                else if(flagX)//①
-                    // //                 {
-                    // //                     flag_need_set_ModeV = 1; //待会需要设置速度模式
-                    // //                     if(flag_need_set_ModeP)  //在if(flagX)循环中，只执行一次这个子循环，即只设置一次位置模式，否则会出现：设置位置模式→控制电机位置→设置位置模式→控制电机位置→...一直循环这样会使电机不动。
-                    // //                     {
-
-                    // //                         flag_need_set_ModeP = 0;
-                    // //                     }
-                    // //                     //设置位置
-
-                    // //                 }
-
-                    // /* ↓↓↓↓↓↓↓↓↓↓在此增加加一键模态↓↓↓↓↓↓模板模板模板↓↓↓↓↓↓↓↓↓↓↓
-                    //  * else if (flagxxx)
-                    //  * {
-                    //  * flag_need_set_ModeV = 1; //待会需要设置速度模式
-                    //      if(flag_need_set_ModeP)  //在if(flagxxx)循环中，只执行一次这个子循环，即只设置一次位置模式，否则会出现：设置位置模式→控制电机位置→设置位置模式→控制电机位置→...一直循环这样会使电机不动。
-                    //      {
-                    //          //设置位置模式
-
-                    //          flag_need_set_ModeP = 0;
-                    //      }
-                    //      //设置位置
-                    //  *
-                    //  * }
-                    //  *
-                    // else
-                    //     ;
-                    //  * ↑↑↑↑↑↑↑↑↑↑在此增加一键模态↑↑↑↑↑↑模板模板模板↑↑*/
-
-                    // /*位置控制完成，改回速度控制*/
-                    // if (flag_need_set_ModeV && !flag_pos_now) // 已经松开“↓”和→ 且需要开启速度模式  flag_need_set_ModeV只会在用过位置模式以后会变成1
-                    // {
-                    //     std::cout << "速度模式已开启" << std::endl;
-                    //     firstCobraPubTosimMsg.firstNeedMode = need_v;
-                    //     firstCobraPubTosim_.publish(firstCobraPubTosimMsg);
-                    //     flag_need_set_ModeV = 0;
-                    // }
-
-                    // /*************控制各电机速度********/
-                    // /**
-                    //  * 0 大臂旋转
-                    //  * 1 大臂前后
-                    //  * 2 小臂上下
-                    //  * 3 爪的上下
-                    //  * 4 爪的左右
-                    //  * 5 爪的上下
-                    //  * 6 爪的张合
-                    //  **/
-                    // for (int i = 0; i < N; i++)
-                    // {
-                    //     firstCobraPubTosimMsg.firstSpeed[i] = ((1 + Is_ChangeV[i] * (cobra_Vel_level - 1)) * flag[i] * cobra_motor_sign[i]) * (2 * M_PI) / 180; // 仿真环境下需要修改单位为 弧度每秒
-                    //     // firstCobraPubTosimMsg.firstSpeed[i] = (1 + Is_ChangeV[i] * (cobra_Vel_level - 1)) * cobra_Vel[i] * flag[i] * cobra_motor_sign[i]; //发布速度单位为....转每分钟
-                    // }
-                    // firstCobraPubTosim_.publish(firstCobraPubTosimMsg); // 发布速度
-                }
-
-                else if (endOrJointMode == END_MODE) // 末端控制
+                if (endOrJointMode == END_MODE) // 末端控制
                 {
 
                     Target_control();
